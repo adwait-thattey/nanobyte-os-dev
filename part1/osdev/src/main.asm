@@ -3,6 +3,19 @@ org 0x7C00  ; The bios loads the code at location 7C00 so tell the assembler to 
 bits 16  ; Tells the assembler to emit 16 bit code. We can use 16/32/64. But all x86 CPUs are backward compatible. 16bit is easier to write
 
 main:
+
+	; setup data segments
+	mov ax, 0 ; we cant dorectly write to ds/es
+	mov ds, ax
+	mov es, ax
+
+	; setup the stack
+	; the stack grows downwards. If we put it anywhere, it might start overwriting the OS code whne it grows. 
+	; putting it at the start of OS memory is safe place as there is nothing before it
+	mov ss, ax
+	mov sp, 0x7C00
+
+
 	hlt ; make the cpu halt. 
 
 ; sometimes the CPU may start executing again after halt. SO make a label and loop back to it. 
