@@ -48,7 +48,6 @@ main:
 	; print the message. LOad address in ds:si and call the puts function
 	mov si, msg_hello
 	call puts
-	call puts
 
 	hlt ; make the cpu halt. 
 

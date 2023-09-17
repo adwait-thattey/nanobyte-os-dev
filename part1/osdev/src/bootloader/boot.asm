@@ -92,22 +92,95 @@ main:
 	mov si, msg_hello
 	call puts
 
-	hlt ; make the cpu halt. 
+	hlt ; make the cpu halt.
 
 ; sometimes the CPU may start executing again after halt. SO make a label and loop back to it. 
 
 .halt:
 	jmp .halt
 
+;
+; Disk IO routines
+;
+
+;
+; Converts and LBA Address to a CHS address
+; Params:
+;	- ax : LBA Address
+; Return:
+;	- cx [bits 0-5]: sector number (lowest 6 bits)
+;	- cx [bits 6-15]: cylinder     (remaining 10 bits) (in opp order, lower 8 bits of cylinder in 8-15 and higher 2 bits in 6-7)
+;	- dh : head
+;
+;	Output is in this format because the disk read API requires this format
+
+;Formula:
+;	sector  = (LBA % sectors_per_track ) + 1
+;	head = 	(LBA % sectors_per_track) % no_of_heads
+;   cylinder = (LBA / sectors per track ) / no_of_heads
+;
+
+lba_to_chs:
+
+	; before doing any operation. We must save registers that are not part of the output. i.e ax and dl
+	; but we can not push and pop dl directly. So we push whole dx and later retrive only dl
+
+	push ax
+	push dx
+
+	;;
+
+	xor dx, dx							; dx = 0
+
+	; the instruction div is used for unsigned data and idiv for signed
+	; dividend is in ax, divisor is passed as argument (wither register or address)
+	; result quotient is in ax and remainder in dx
+	; ax already contains the LBA
+
+	div word [bpb_sectors_per_track]	; ax = LBA / sectors_per_track , dx = LBA % sectors_per_track
+
+	inc dx
+	mov cx dx							; cx now has sector number
+
+	div word [bpb_sides_on_media]		; ax = (LBA / sectors_per_track) / HEADS ;; dx = (LBA / sectors_per_tracl) % HEAD
+										; cylinder now in ax, head is in dx
+
+	mov dh, dl							; head was in dx, dl is the lower 8 bits of dx
+
+	;; for cylinder, lower 6 bits of cx are sector number and remaining 10 bits are cylinder (in opp order, lower 8 bits of cylinder in 8-15 and higher 2 bits in 6-7)
+	; cylinder is in ax. move from al to ch the lower 8 bits of cylinder. For upper 2 bits, first shift them by 6, then or with cl
+	; note that cl alrady contains the head
+	; instruction to shift left is shl
+
+	mov ch, al
+	shl 6								; ax is now shifted by 6
+	or cl,al							; cl = cl OR al  (remeber cx already contains sector number)
+
+	;; restore the saved registers
+	; pop earlier saved dx, but restore only dl
+
+	pop ax
+	mov dl, al
+	pop ax
+
+	ret
+
+
+;
+; Reads a sector from disk
+;
+
+
+
 msg_hello: db 'Hello world!', ENDL, 0		;; db writes to the memory and puts label msg_hello as reference to the memory
 
 ; For signature BIOS expects last 2 bytes in 1st sector to be AA55
 ; We are using floppy format here which has 512 bytes in 1 sector. We will fill up 510 bytes then add the signature
 
-; $ gives the offset of the current line. 
-; $$ gives the offset of the whole program. 
-; Thus $ - $$ will give the size of program till now. 
-; We will fill 0s from end of current program till 510th byte. 
+; $ gives the offset of the current line.
+; $$ gives the offset of the whole program.
+; Thus $ - $$ will give the size of program till now.
+; We will fill 0s from end of current program till 510th byte.
 ; db is an instruction to place a byte
 ; times is an instruction which allows to repeat other instruction
 
