@@ -3,6 +3,49 @@ bits 16  ; Tells the assembler to emit 16 bit code. We can use 16/32/64. But all
 
 %define ENDL 0x0D, 0x0A
 
+; Need to setup the header for FAT12 system
+; Values set from here : https://wiki.osdev.org/FAT
+; created a test FAT12 image to see what values each location should have
+
+;
+; FAT12 Header
+;
+
+;; BIOS Parameter Block
+
+jmp short start									;The first 3 bytes are jump short and the address to start executing from, then a no-op
+nop
+
+bpb_oem:					db 'MSWIN4.1'		; 8bytes. This string is meaningless but for compatibility, MS recommends to set this value
+bpb_bytes_per_sector:		dw 512				; 2 bytes
+bpb_sectors_per_cluster:	db 1
+bpb_n_reserved_clusters:	dw 1				; 2 bytes
+bpb_fat_count:				db 2				; number of FATs on the media
+bpb_root_dir_count:			dw 0E0h				; no of root dirs entries
+bpb_total_sectors:			dw 2880				; floppy size is 1.44MiBs. 512 * 2880 = 1440 KBs
+bpb_media_storage_des:		db 0F0h				; media descriptor type
+bpb_sectors_per_fat:		dw 9
+bpb_sectors_per_track:		dw 18
+bpb_sides_on_media:			dw 2
+bpb_hidden_sectors:			dd 0
+bpb_large_sector_count:		dd 0
+
+;; Extended boot record
+
+ebr_drive_number:			db 0				; drive no is 0 for floppy disk
+ebr_win_flag:				db 0				; reserved flag for WINDOWS NT
+ebr_sig:					db 029h
+ebr_vol_id:					db 12h, 34h, 56h, 78h  ; 4 byte serial number. We can put anything
+ebr_vol_label:				db 'NANOBYTE OS'		; 11 bytes; any label is fine but pad it to 11 bytes
+ebr_system_id:				db 'FAT12   '			; 8 bytes; Pas with spaces
+
+
+;; remaining is the boot code and signature
+
+
+
+
+
 start:
 	jmp main ;ensure that main is the entry point of our function
 
