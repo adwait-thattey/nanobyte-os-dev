@@ -32,7 +32,7 @@ bpb_large_sector_count:		dd 0
 
 ;; Extended boot record
 
-ebr_drive_number:			db 0				; drive no is 0 for floppy disk
+ebr_drive_number:			db 0				; drive no is 0 for floppy disk; but meaningless as it is set by BIOS to DL on boot
 ebr_win_flag:				db 0				; reserved flag for WINDOWS NT
 ebr_sig:					db 029h
 ebr_vol_id:					db 12h, 34h, 56h, 78h  ; 4 byte serial number. We can put anything
@@ -88,16 +88,43 @@ main:
 	mov ss, ax
 	mov sp, 0x7C00
 
+	; read from floppy
+	; the BIOS should have set DL to the drive number
+	mov [ebr_drive_number], dl
+
+	; the first sector contains the bios. Read from 2nd sector
+	mov ax, 1
+	mov cl, 1
+
+	; sector side is 512 = 0x200, data is from 2nd sector therefore 0x7C00 + 0x200 = 7E00
+	; es is already set to 0, set bx to this value
+	mov bx, 0x7E00
+	call disk_read
+
 	; print the message. LOad address in ds:si and call the puts function
 	mov si, msg_hello
 	call puts
 
-	hlt ; make the cpu halt.
+	jmp .halt
 
-; sometimes the CPU may start executing again after halt. SO make a label and loop back to it. 
 
 .halt:
+	cli					; disable interrupts
 	jmp .halt
+
+floppy_error:
+	mov si, msg_read_failed
+	call puts
+	jmp wait_key_and_reboot
+	hlt
+
+wait_key_and_reboot:
+	mov ah, 0
+	int 16
+	jmp 0FFFFh:0			; jump to begining of bios. SHould reboot system
+
+
+; sometimes the CPU may start executing again after halt. SO make a label and loop back to it. 
 
 ;
 ; Disk IO routines
@@ -140,8 +167,9 @@ lba_to_chs:
 	div word [bpb_sectors_per_track]	; ax = LBA / sectors_per_track , dx = LBA % sectors_per_track
 
 	inc dx
-	mov cx dx							; cx now has sector number
+	mov cx, dx							; cx now has sector number
 
+	xor dx, dx
 	div word [bpb_sides_on_media]		; ax = (LBA / sectors_per_track) / HEADS ;; dx = (LBA / sectors_per_tracl) % HEAD
 										; cylinder now in ax, head is in dx
 
@@ -153,8 +181,8 @@ lba_to_chs:
 	; instruction to shift left is shl
 
 	mov ch, al
-	shl 6								; ax is now shifted by 6
-	or cl,al							; cl = cl OR al  (remeber cx already contains sector number)
+	shl ah, 6							; ax is now shifted by 6
+	or cl,ah							; cl = cl OR ah  (remeber cx already contains sector number)
 
 	;; restore the saved registers
 	; pop earlier saved dx, but restore only dl
@@ -168,11 +196,83 @@ lba_to_chs:
 
 ;
 ; Reads a sector from disk
+; Parameters:
+;	- ax: LBA Address
+;	- cl: Number of sectors to read
+;	- dl: Drive Number
+;	- es:bx : Memory address where to store the read data
+
+disk_read:
+
+	; save all registers that will be modified
+
+	push ax
+	push bx
+	push cx
+	push dx
+	push di
+
+	; The 13,2 H interrupt does read on floppy. It needs CHS input,
+	; which we should already get in required registers from the conversion function
+	; We need to set AL to the number of sectors to read and should retry the read at least 3 times as floppys are unreliable
+
+	push cx				; save cl (number of sectors to read)
+	call lba_to_chs
+	pop ax				; al = number of sectors to read. Cant just pop al
+
+	mov ah, 02h			; 2h is read operation
+
+ 	mov di, 3			; retry read 3 times
+
+
+.retry:
+
+	pusha				; save all registers
+	stc					; set carry flag explicitly
+	
+	int 13h				; if carry is cleared, means operation succeeded
+	jnc .done
+	
+	; read failed
+	popa
+	call disk_reset		; reset disk controller
+
+	dec di
+	test di, di
+	jnz .retry
+
+.fail:
+	; all attempts have failed
+
+	jmp floppy_error
+.done:
+	popa
+
+	pop di
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	
+	ret
+
+
 ;
-
-
+; Reset disk controller
+; Parameter:
+; dl: drive number
+;
+disk_reset:
+	pusha
+	mov ah, 0
+	stc
+	int 13h
+	jc floppy_error
+	popa
+	ret
 
 msg_hello: db 'Hello world!', ENDL, 0		;; db writes to the memory and puts label msg_hello as reference to the memory
+msg_read_failed: db 'Disk Read failed!!!', ENDL, 0
 
 ; For signature BIOS expects last 2 bytes in 1st sector to be AA55
 ; We are using floppy format here which has 512 bytes in 1 sector. We will fill up 510 bytes then add the signature
