@@ -1,0 +1,1 @@
+/run/media/coderdude/adth/Projects/OS\ Tutorial\ nanobyte/part1/osdev/tools/fat/fat_parser/target/debug/fat_parser: /run/media/coderdude/adth/Projects/OS\ Tutorial\ nanobyte/part1/osdev/tools/fat/fat_parser/src/main.rs
