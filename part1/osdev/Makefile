@@ -1,5 +1,8 @@
 ASM=nasm
 CC=gcc
+CC16=/usr/bin/watcom/binl64/wcc
+LD16=/usr/bin/watcom/binl64/wlink
+
 RUSTC=cargo
 
 SRC_DIR=src
