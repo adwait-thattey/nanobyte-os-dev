@@ -3,3 +3,4 @@
 *.exe
 *.ini
 build/
+tools/watcom/
