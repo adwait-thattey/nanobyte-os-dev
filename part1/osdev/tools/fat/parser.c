@@ -61,7 +61,7 @@ typedef struct {
 } __attribute__((packed)) DirectoryStructure;
 
 BootSector g_BootSector;
-uint8_t* g_FAT = NULL;
+uint8_t* g_FAT = NULL;  // this is 8 bit integer. But each FAT12 entry is 12 bits. Thus 1.5 of each is going to corrospond to a FAT entry. This is relevant in readFIle function below
 DirectoryStructure* g_rootEntry = NULL;
 uint32_t g_RootDirectoryEnd = 0;
 
@@ -93,11 +93,19 @@ bool readRootDirectory(FILE* disk)
 {
     // root dir starts after reserved sectors and file allocation tables
 
+    /*
+     * There can be multiple entries (file/folder) in the root directory
+     * bpb_root_dir_count gives count of how many such files/folders are present
+     * Each of them would be an object of type DirectoryStructure
+     * SO find out how many such objects are there and get size to be read in bytes. 
+     * Then convert this into number of sectors to be read and read them into g_rootEntry pointer. 
+     * Now g_rootENtry is effectively an array with each element referring to each file/folder in root
+    */
     uint32_t lba = (g_BootSector.bpb_n_reserved_clusters*g_BootSector.bpb_sectors_per_cluster) + (g_BootSector.bpb_sectors_per_fat*g_BootSector.bpb_fat_count);
     uint32_t sizeInBytes = sizeof(DirectoryStructure)*g_BootSector.bpb_root_dir_count;
     uint32_t sizeInSectors = sizeInBytes/g_BootSector.bpb_bytes_per_sector;
     if(sizeInBytes % g_BootSector.bpb_bytes_per_sector > 0) {
-        ++sizeInBytes;
+        ++sizeInSectors;
     }
 
     g_rootEntry = (DirectoryStructure*) malloc(sizeInSectors*g_BootSector.bpb_bytes_per_sector);
@@ -140,20 +148,29 @@ bool readFile(DirectoryStructure* fileEntry, FILE* disk, uint8_t* outputBuffer)
         return false;
 
     /* the first cluster is pointed to by the FirstClusterLow field in the record
-        Then the cluster chain begins. 
-        Here is how the cluster chain is organized
-        FAT table indicates the status and location of all clusters on the disk
-        FAT12 uses 12 bits to address the clusters on the disk. Each 12 bit entry in the FAT points to the next cluster for a file
-    
-        Given a current cluster, how to find the next cluster ?
-        offset to FAT table = current_cluster current_cluster/2  (current cluster * 1.5)
-
-        fat_sector + first_fat_sector + (fat_offset/size_of_sector)
-
-        Now we know the required data is 12 bits wide. We read 2 sectors at this point from fat_Sector
-        2 sectors is 16 bits, but FAT record is only 12 bits
-        If Current cluster is even (0,2,4...) means we need to discard the left most 4 bits
-        If current cluster is odd (1,3,5...) means we need to discard the right most 4 bits
+     * (FirstClusterLow tells the lower 16 bits of cluster, FirstClusterHigh the higher 16 bits. But since this is FAT12, cluster numbers would be limited to 12 bits. 
+     * Hence HighClusterNumber always remains 0
+     *
+     * Given a cluster, how to find the next cluster in chain?
+     * For this we need the FAT table. 
+     * To find the next cluster, we need to go to the FAT entry for the current cluster. 
+     * This entry will contain the cluster number for the next cluster.
+     * CLuster numbers are always lower than 0xFF8. So a number greater than or equal to 0xFF8 in the FAT entry indicates the end of cluster chain, i.e. last file block has been reached.
+     * So how to find the FAT entry for a cluster?
+     * THere is significant complexity involved here due to the nature of how little endian bytes are stored and each entry being 12 bits
+     * Taken from here: https://wiki.osdev.org/FAT#FAT_12_2
+     * For example, 2 consequently FAT entries with values 0x123 and 0x456 when stored in the HEX table would be stored as 23 61 45
+     * WHy? because least significant bytes are stored first in little endian. 23 is the least significant byte of 0x123, thus stored first
+     * Then 1 gets combined with 6 to form next byte then 45 is the most significant byte
+     *
+     * SO how to mitigate this?
+     * If we read 23 61 45 as a 16 bit little endian number, we would get values 0x6123 and 0x4561
+     * To recover )x123 from 1st, we discard the first 4 bits (0x6) and to recover 0x456 from 2nd number, we discard last 4 bits (0x1)
+     *
+     * Thus to read the next cluster in chain, we go to location floor(cluster_number*1.5) index in the FAT table and read 16 bits. 
+     * Then if the cluster number was even, we discard the first 4 bits 
+     * If the cluster number was odd, we discard the last 4 bits
+     *
 
  */
 
@@ -166,6 +183,8 @@ bool readFile(DirectoryStructure* fileEntry, FILE* disk, uint8_t* outputBuffer)
         // first 2 clusters are part of reserved. 
         uint32_t lba = g_RootDirectoryEnd + (currentCluster - 2)*g_BootSector.bpb_sectors_per_cluster;
         ok = ok && readSectors(disk, lba, g_BootSector.bpb_sectors_per_cluster, outputBuffer);
+
+        // move outputBuffer pointer ahead so that we can read next cluster
         outputBuffer += (g_BootSector.bpb_sectors_per_cluster*g_BootSector.bpb_bytes_per_sector);
 
         uint32_t fatIndex = currentCluster + currentCluster/2;
