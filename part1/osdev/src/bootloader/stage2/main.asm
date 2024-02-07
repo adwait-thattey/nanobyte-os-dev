@@ -1,45 +1,38 @@
-org 0x0
-bits 16
+bits 16   # using 16 bit code
+
+section _ENTRY class=CODE       # As defined in the linker script
+
+extern _csstart_    # This is the entrypoint from C
+global entry        # export the entry symbol so that it is visible outside this assembly file
+
+entry:
+    cli  # clear interrupt while setting up the flag
+
+    # we are using the small memory model so the stack and data segments should be the same
+
+    # data segment is already setup by stage 1. Copy it to stack segment
+    mov ax, ds
+    mov ss, ax
+
+    
+    # We set the base pointer and stack pointer to 0. SInce stack grows downward, it will wrap around the segment. 
+    # Nothing should be overridden as long as stage2 is below somewhere around 60KBs
+    
+    mov sp, 0
+    mov bp, sp
+
+    sti  # set interrupts. Allow external interrupts now
 
 
-%define ENDL 0x0D, 0x0A
+    # now we expect the boot drive to be set in DL register. We will send it as an argument to the main function
+    # To do this, put it into the stack
+    
+    xor dh, dh
+    push dx     # we can push only full dx. SO set dh to 0 before pushing DL
 
+    call _cstart_
 
-start:
-    ; print hello world message
-    mov si, msg_hello
-    call puts
+    # If we reach here, for safety, halt the system
 
-.halt:
     cli
     hlt
-
-;
-; Prints a string to the screen
-; Params:
-;   - ds:si points to string
-;
-puts:
-    ; save registers we will modify
-    push si
-    push ax
-    push bx
-
-.loop:
-    lodsb               ; loads next character in al
-    or al, al           ; verify if next character is null?
-    jz .done
-
-    mov ah, 0x0E        ; call bios interrupt
-    mov bh, 0           ; set page number to 0
-    int 0x10
-
-    jmp .loop
-
-.done:
-    pop bx
-    pop ax
-    pop si
-    ret
-
-msg_hello: db 'Hello world from STAGE2!', ENDL, 0
