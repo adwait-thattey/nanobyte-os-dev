@@ -2,5 +2,7 @@
 *.bin
 *.exe
 *.ini
+*.err
 build/
 tools/watcom/
+
