@@ -2,7 +2,7 @@ BUILD_DIR?=build/
 ASM?=nasm
 ASMFLAGS?=-f obj
 CC16=/usr/bin/watcom/binl64/wcc
-CFLAGS16?=-4 -d3 -wx -ms -zl -zq
+CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq
 	# These flags taken from watcom documentation
 	#  -4 specifically compiler compatible with 486 compiler. Not strictly necessary.
 	#  -d3 generates full debugging symbols with obj files
@@ -17,7 +17,7 @@ LD16=/usr/bin/watcom/binl64/wlink
 SOURCES_C=$(wildcard *.c)
 SOURCES_ASM=$(wildcard *.asm)
 OBJECTS_C=$(patsubst %.c, $(BUILD_DIR)/stage2/c/%.obj, $(SOURCES_C))
-OBJECTS_C=$(patsubst %.asm, $(BUILD_DIR)/stage2/asm/%.obj, $(SOURCES_ASM))
+OBJECTS_ASM=$(patsubst %.asm, $(BUILD_DIR)/stage2/asm/%.obj, $(SOURCES_ASM))
 
 .PHONY: all clean
 
