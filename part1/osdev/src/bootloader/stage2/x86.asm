@@ -2,6 +2,34 @@ bits 16
 
 section _TEXT class=CODE    ;; we want to put this file in the TEXT section of CODE class (see linker class)
 
+;
+; U4D
+;
+; Operation:      Unsigned 4 byte divide
+; Inputs:         DX;AX   Dividend
+;                 CX;BX   Divisor
+; Outputs:        DX;AX   Quotient
+;                 CX;BX   Remainder
+; Volatile:       none
+;
+global __U4D
+__U4D:
+    shl edx, 16         ; dx to upper half of edx
+    mov dx, ax          ; edx - dividend
+    mov eax, edx        ; eax - dividend
+    xor edx, edx
+
+    shl ecx, 16         ; cx to upper half of ecx
+    mov cx, bx          ; ecx - divisor
+
+    div ecx             ; eax - quot, edx - remainder
+    mov ebx, edx
+    mov ecx, edx
+    shr ecx, 16
+
+    mov edx, eax
+    shr edx, 16
+
 global _x86_div64_32
 _x86_div64_32:
 
