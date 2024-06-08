@@ -79,7 +79,7 @@ _x86_Video_WriteCharacterTeletype:
     pop bp
     ret
 
-;; void _cdecl x86_Disk_Reset(uint8_t drive);
+;; bool _cdecl x86_Disk_Reset(uint8_t drive);
 global _x86_Disk_Reset  ;; export it
 _x86_Disk_Reset:
     ;; create a new frame
@@ -107,8 +107,8 @@ _x86_Disk_Reset:
     ret
 
 
-;;  void _cdecl x86_Disk_Read(  uint8_t drive, uint16_t cylinder, uint16_t head,
-;;                              uint16_t sector, uint8_t count, uint8_t far * dataOut);
+;;  bool _cdecl x86_Disk_Read(  uint8_t drive, uint16_t cylinder, uint16_t sector, 
+;;                              uint16_t head, uint8_t count, uint8_t far * dataOut);
 global _x86_Disk_Read  ;; export it
 _x86_Disk_Read:
     ;; create a new frame
@@ -137,10 +137,10 @@ _x86_Disk_Read:
     mov cl, [bp + 7]    ; copy full upper 8 bits. but we need only upper 2 bits so shift left by 6
     shl cl, 6
 
-    mov dh, [bp + 8]    ; head
+    mov dh, [bp + 10]    ; head
 
     ;; sector number. Bits 0-5 of Cl represent the sector number. So copy then take an & with 00111111 (x3F) to ensure only bits 0-5 survive 
-    mov al, [bp + 10]; temp copy to al
+    mov al, [bp + 8]; temp copy to al
     and al, 3Fh
     or cl, al; now bits 0-5 of cl are sector num and bits 6-7 are cylinder
 
@@ -171,7 +171,7 @@ _x86_Disk_Read:
     ret
 
 
-; void _cdecl x86_Disk_GetDriveParams(uint8_t drive, uint8_t* driveTypeOut, uint16_t* cylindersOut,
+; bool _cdecl x86_Disk_GetDriveParams(uint8_t drive, uint8_t* driveTypeOut, uint16_t* cylindersOut,
 ;                                    uint16_t* sectorsOut, uint16_t* headsOut);
 global _x86_Disk_GetDriveParams
 _x86_Disk_GetDriveParams:

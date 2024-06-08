@@ -2,7 +2,7 @@ BUILD_DIR?=build/
 ASM?=nasm
 ASMFLAGS?=-f obj
 CC16=/usr/bin/watcom/binl64/wcc
-CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq
+CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq -za99
 	# These flags taken from watcom documentation
 	#  -4 specifically compiler compatible with 486 compiler. Not strictly necessary.
 	#  -d3 generates full debugging symbols with obj files
@@ -11,7 +11,7 @@ CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq
 	#  -ms: Use small memory model
 	#  -zl: DOnt add references to std library., Very important in our free standing environment because we dont have standard OS libraries
 	#  -zq only display warnings and errors
-	#
+	#  -za99 use C99 standard
 LD16=/usr/bin/watcom/binl64/wlink
 
 SOURCES_C=$(wildcard *.c)
