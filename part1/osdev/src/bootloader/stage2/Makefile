@@ -1,7 +1,7 @@
 BUILD_DIR?=build/
 ASM?=nasm
 ASMFLAGS?=-f obj
-CC16=/usr/bin/watcom/binl64/wcc
+CC16?=/usr/bin/watcom/binl64/wcc
 CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq -za99
 	# These flags taken from watcom documentation
 	#  -4 specifically compiler compatible with 486 compiler. Not strictly necessary.
@@ -12,14 +12,14 @@ CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq -za99
 	#  -zl: DOnt add references to std library., Very important in our free standing environment because we dont have standard OS libraries
 	#  -zq only display warnings and errors
 	#  -za99 use C99 standard
-LD16=/usr/bin/watcom/binl64/wlink
+LD16?=/usr/bin/watcom/binl64/wlink
 
 SOURCES_C=$(wildcard *.c)
 SOURCES_ASM=$(wildcard *.asm)
 OBJECTS_C=$(patsubst %.c, $(BUILD_DIR)/stage2/c/%.obj, $(SOURCES_C))
 OBJECTS_ASM=$(patsubst %.asm, $(BUILD_DIR)/stage2/asm/%.obj, $(SOURCES_ASM))
 
-.PHONY: all clean
+.PHONY: all stage2 clean always
 
 all: stage2
 
@@ -44,5 +44,5 @@ always:
 	mkdir -p $(BUILD_DIR)/stage2/asm
 
 clean:
-	rm -rf $(BUILD_DIR)/stage2.bin
+	rm -f $(BUILD_DIR)/stage2.bin
 

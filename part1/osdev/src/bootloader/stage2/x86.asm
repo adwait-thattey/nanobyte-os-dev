@@ -30,6 +30,7 @@ __U4D:
     mov edx, eax
     shr edx, 16
 
+    ret
 ;
 ; U4M
 ; Operation:      integer four byte multiply
