@@ -5,4 +5,5 @@
 *.err
 build/
 tools/watcom/
+.vscode/
 
