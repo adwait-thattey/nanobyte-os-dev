@@ -9,7 +9,7 @@ SRC_DIR=src
 BUILD_DIR=build
 TOOLS_DIR=tools
 
-.PHONY: all floppy_image kernel bootloader clean always tools_fat
+.PHONY: all floppy_image kernel bootloader clean always tools_fat run debug
 
 all: floppy_image kernel bootloader tools_fat
 #
@@ -83,3 +83,9 @@ clean:
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
 	$(MAKE) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) clean
 	rm -rf $(BUILD_DIR)/*
+
+run:
+	./run.sh
+
+debug:
+	./debug.sh
