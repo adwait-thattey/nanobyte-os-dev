@@ -6,4 +6,5 @@
 build/
 tools/watcom/
 .vscode/
+.idea/
 
