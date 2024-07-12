@@ -17,7 +17,23 @@ entry:
     ;; step 2: Enable the A20 line
     ; This step is only in the osdev wiki, not in the intel doc
     call EnableA20
+
+    ;; Step 3: load GDT table
     call LoadGDT
+
+    ; Step 4: Set protected mode enabled
+    mov eax, cr0
+    or al, 1    ; Set bit 1 of eax to 1
+    mov cr0, eax
+
+    ; step 5: perform a far jump/call into a protected mode code segment
+    ;; In our case, protected mode code segment is the 2nd entry into the GDT table
+    ;; for detailed explanation, check one note page "CPU protected vs real mode " section: STEP-5 : https://onedrive.live.com/redir?resid=A5259C7E6DFB4C6F%211685&page=Edit&wd=target%28Nanobyte%20OS%20Youtube%20series.one%7C8a3e1774-edb1-4849-86ee-1cf0c8c52b78%2FCPU%20protected%20vs%20real%20mode%7Cba2f029f-231c-4d6e-b3be-67040f222c95%2F%29&wdorigin=703
+
+    jmp dword 08h:.pmode
+
+.pmode:
+    ;; we are now in 32 bit protected mode!
 
 .halt:
     jmp .halt
