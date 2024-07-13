@@ -5,6 +5,7 @@
 *.err
 build/
 tools/watcom/
+toolchain/
 .vscode/
 .idea/
 

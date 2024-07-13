@@ -1,17 +1,14 @@
-ASM=nasm
-CC=gcc
-CC16=/usr/bin/watcom/binl64/wcc
-LD16=/usr/bin/watcom/binl64/wlink
-
-RUSTC=cargo
-
 SRC_DIR=src
 BUILD_DIR=build
 TOOLS_DIR=tools
 
+include build_scripts/config.mk
+
 .PHONY: all floppy_image kernel bootloader clean always tools_fat run debug
 
 all: floppy_image kernel bootloader tools_fat
+
+include build_scripts/toolchain.mk
 #
 # Floppy Image
 #
