@@ -34,11 +34,87 @@ entry:
 
 .pmode:
     ;; we are now in 32 bit protected mode!
+    [bits 32]
+
+    ;; step 6: Set ds, ss to data segment register
+    mov ax, 0x10    ;; protected mode data segment is 3rd entry ion GDT = 16th bit = 0x10
+    mov ds, ax
+    mov ss, ax
+
+    ;; Now we want to print something. Load string and buffer address into si di as source and destination
+    ;; We will copy stuff from si into di
+    ;; Now that we are in 32 bit protected mode, we should use 32 bit registers
+    mov esi, g_Hello
+    mov edi, ScreenBuffer
+
+    ;; This is a special instruction Clear Direction flag. We wish to copy esi into edi. The direction flag sets the direction in which string operations process data
+    ;; Clearing it to 0, ensures that operations are performed in the order or lower address -> higher address
+    ;; If DF is 1, string operations process data from higher address -> lower addresses
+    cld
+
+.loop:
+    [bits 32]
+
+    lodsb   ;; This loads 1 byte from si into al and auto increments si
+    or al, al   ;; This is our exit condition (0 terminated string). We exit when it is 0
+    jz .done
+
+    ;; In our buffer always we have 2 byte pairs for each character. 1st byte is the character itself. 2nd byte specifies the color / meta decscription of the byte
+    mov [edi], al   ;; set first byte to the character
+    inc edi ;; increment edi by 1 byte
+
+    mov [edi], byte 10100101b     ;; set 2nd byte to the color as described in the onenote notebook
+    inc edi
+
+    jmp .loop
+
+.done:
+
+    ;; now lets switch back to 16 bit real mode.
+    ;; Interrupts are already disabled and we didnt set stack segments to no need to reset them
+    ;; first lets jump to 16 bit protected mode
+    jmp word 18h:.pmode16         ; 1 - jump to 16-bit protected mode segment , 4th segment is the 16 bit  segment
+
+.pmode16:
+    [bits 16]
+
+    ; 2 - disable protected mode bit in cr0
+    mov eax, cr0
+    and al, ~1
+    mov cr0, eax
+
+    ; 3 - jump to real mode. Now jump using real mode segment:offset address. Segment is 0
+    jmp word 00h:.rmode
+
+.rmode:
+    ; 4 - setup segments
+    mov ax, 0
+    mov ds, ax
+    mov ss, ax
+
+    ; 5 - enable interrupts
+    sti
+
+    ; print hello world using int 10h
+    mov si, g_HelloR
+
+.rloop:
+    lodsb
+    or al, al
+    jz .rdone
+    mov ah, 0eh
+    int 10h
+    jmp .rloop
+
+.rdone:
+
+    ; To go back to protected mode, disable interrupts and repeat steps 4-6
 
 .halt:
     jmp .halt
 
 LoadGDT:
+    [bits 16]
     ;; lgdt is a special instruction that loads the data structure into the GDTR register
     lgdt [g_GDTDesc]
     ret
@@ -116,6 +192,7 @@ KbdControllerEnableKeyboard         equ 0xAE
 KbdControllerReadCtrlOutputPort     equ 0xD0
 KbdControllerWriteCtrlOutputPort    equ 0xD1
 
+ScreenBuffer                        equ 0xB8000
 
 ;; GDT
 g_GDT:
@@ -165,7 +242,10 @@ g_GDT:
 g_GDTDesc:  dw g_GDTDesc - g_GDT - 1    ; limit = size of GDT
             dd g_GDT                    ; address of GDT
 
-times 510-($-$$) db 0
+g_Hello:    db "Hello world from protected mode!", 0
+g_HelloR:   db "Hello world from real mode!", 0
+
+times 510-($-$$) db 0   ;; set everything until 510 bytes to 0. We have total 512 bytes available. Last 2 bytes are next line
 dw 0AA55h
 
 
