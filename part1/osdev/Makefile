@@ -1,6 +1,4 @@
-SRC_DIR=src
 BUILD_DIR=build
-TOOLS_DIR=tools
 
 include build_scripts/config.mk
 
@@ -24,9 +22,9 @@ $(BUILD_DIR)/main_floppy.img: bootloader kernel
 
 	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/stage2.bin "::stage2.bin"
 	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/kernel.bin "::kernel.bin"
-	mcopy -i $(BUILD_DIR)/main_floppy.img $(TOOLS_DIR)/fat/test.txt "::test.txt"
+	mcopy -i $(BUILD_DIR)/main_floppy.img tools/fat/test.txt "::test.txt"
 	mmd   -i $(BUILD_DIR)/main_floppy.img "::mydir"
-	mcopy -i $(BUILD_DIR)/main_floppy.img $(TOOLS_DIR)/fat/test.txt "::mydir/test.txt"
+	mcopy -i $(BUILD_DIR)/main_floppy.img tools/fat/test.txt "::mydir/test.txt"
 
 
 
@@ -38,13 +36,13 @@ bootloader: stage1 stage2
 stage1: $(BUILD_DIR)/stage1.bin
 
 $(BUILD_DIR)/stage1.bin: always
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR))
+	$(MAKE) -C src/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR))
 
 #
 stage2: $(BUILD_DIR)/stage2.bin
 
 $(BUILD_DIR)/stage2.bin: always
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR))
+	$(MAKE) -C src/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR))
 
 
 # Kernel
@@ -52,7 +50,7 @@ $(BUILD_DIR)/stage2.bin: always
 kernel: $(BUILD_DIR)/kernel.bin
 
 $(BUILD_DIR)/kernel.bin: always
-	$(MAKE) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR))
+	$(MAKE) -C src/kernel BUILD_DIR=$(abspath $(BUILD_DIR))
 
 
 #
@@ -60,11 +58,11 @@ $(BUILD_DIR)/kernel.bin: always
 #
 
 tools_fat: $(BUILD_DIR)/tools/fat
-$(BUILD_DIR)/tools/fat : always $(TOOLS_DIR)/fat
+$(BUILD_DIR)/tools/fat : always tools/fat
 	mkdir -p $(BUILD_DIR)/tools
-	$(CC) -g -o $(BUILD_DIR)/tools/fat12.bin $(TOOLS_DIR)/fat/parser.c 
-	#$(RUSTC) build --manifest-path $(TOOLS_DIR)/fat/fat_parser/Cargo.toml
-	#cp $(TOOLS_DIR)/fat/fat_parser/target/debug/fat_parser $(BUILD_DIR)/tools/
+	$(CC) -g -o $(BUILD_DIR)/tools/fat12.bin tools/fat/parser.c
+	#$(RUSTC) build --manifest-path tools/fat/fat_parser/Cargo.toml
+	#cp tools/fat/fat_parser/target/debug/fat_parser $(BUILD_DIR)/tools/
 
 #
 # Always
@@ -76,9 +74,9 @@ always:
 # Clean
 #
 clean:
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
-	$(MAKE) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) clean
+	$(MAKE) -C src/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
+	$(MAKE) -C src/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
+	$(MAKE) -C src/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) clean
 	rm -rf $(BUILD_DIR)/*
 
 run:

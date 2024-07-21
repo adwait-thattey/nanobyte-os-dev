@@ -417,8 +417,8 @@ msg_stage2_not_found:   db 'STAGE2.BIN file not found!', ENDL, 0
 file_stage2_bin:        db 'STAGE2  BIN'
 stage2_cluster:         dw 0
 
-STAGE2_LOAD_SEGMENT     equ 0x2000
-STAGE2_LOAD_OFFSET      equ 0
+STAGE2_LOAD_SEGMENT     equ 0x0     ;; This is changed for protected mode. Not yet sure why
+STAGE2_LOAD_OFFSET      equ 500
 
 
 ; For signature BIOS expects last 2 bytes in 1st sector to be AA55
