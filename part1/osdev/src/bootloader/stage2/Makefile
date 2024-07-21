@@ -1,4 +1,4 @@
-BUILD_DIR?= $(abspath build)
+#BUILD_DIR?= $(abspath build)
 TARGET_ASMFLAGS += -f elf	# watcom used obj files, gcc requires elf files
 TARGET_CFLAGS += -ffreestanding -nostdlib
 # explanation for above flags
@@ -26,13 +26,17 @@ $(BUILD_DIR)/stage2.bin: $(OBJECTS_ASM) $(OBJECTS_C)
 # @linker.ld is the custom script that needs to be executed. We will write it later
 
 $(BUILD_DIR)/stage2/c/%.obj: %.c always
-	$(TARGET_CC) $(TARGET_CFLAGS) -c -o=$@ $<
+	@mkdir -p $(@D)
+	$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
+	@echo "--> Compiled: " $<
 
 # Above $@ refers to the target, $< refers to the first depedency. 
 # The target is full path to the obj file, the first dependency that we have specified above is the .c file
 
 $(BUILD_DIR)/stage2/asm/%.obj: %.asm always
+	@mkdir -p $(@D)
 	$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $<
+	@echo "--> Compiled: " $<
 
 always:
 	mkdir -p $(BUILD_DIR)/stage2/c
