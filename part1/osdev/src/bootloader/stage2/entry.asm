@@ -21,10 +21,10 @@ entry:
     mov ax, ds
     mov ss, ax
 
-    
-    ;# We set the base pointer and stack pointer to 0. SInce stack grows downward, it will wrap around the segment. 
+
+    ;# We set the base pointer and stack pointer to 0. SInce stack grows downward, it will wrap around the segment.
     ;# Nothing should be overridden as long as stage2 is below somewhere around 60KBs
-    
+
     mov sp, 0xFFF0
     mov bp, sp
 
@@ -63,8 +63,8 @@ entry:
     mov ecx, __end
     sub ecx, edi
     mov al, 0
-    cld
-    rep stosb
+    cld ;; make sure edi is incremented in following instruction
+    rep stosb ; stosb copies byte from al into edi then increment edi. rep repeats an instruction ecx times
 
     ; expect boot drive in dl, send it as argument to cstart function
     xor edx, edx

@@ -1,4 +1,4 @@
-#BUILD_DIR?= $(abspath build)
+BUILD_DIR?= $(abspath build)
 TARGET_ASMFLAGS += -f elf	# watcom used obj files, gcc requires elf files
 TARGET_CFLAGS += -ffreestanding -nostdlib
 # explanation for above flags

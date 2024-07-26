@@ -1,5 +1,5 @@
 #include <stdint.h>
-//#include "stdio.h"
+#include "stdio.h"
 //#include "disk.h"
 //#include "fat.h"
 
@@ -7,6 +7,7 @@
 
 void __attribute__((cdecl)) start(uint16_t bootDrive)
 {
+    printf("Hello from Stage2");
 }
 //    DISK disk;
 //    if (!DISK_Initialize(&disk, bootDrive))

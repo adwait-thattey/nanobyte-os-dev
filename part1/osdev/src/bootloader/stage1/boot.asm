@@ -264,7 +264,7 @@ puts:
 
 
 
-; sometimes the CPU may start executing again after halt. SO make a label and loop back to it. 
+; sometimes the CPU may start executing again after halt. SO make a label and loop back to it.
 
 ;
 ; Disk IO routines
@@ -369,10 +369,10 @@ disk_read:
 
 	pusha				; save all registers
 	stc					; set carry flag explicitly
-	
+
 	int 13h				; if carry is cleared, means operation succeeded
 	jnc .done
-	
+
 	; read failed
 	popa
 	call disk_reset		; reset disk controller
@@ -393,7 +393,7 @@ disk_read:
 	pop cx
 	pop bx
 	pop ax
-	
+
 	ret
 
 
@@ -418,7 +418,7 @@ file_stage2_bin:        db 'STAGE2  BIN'
 stage2_cluster:         dw 0
 
 STAGE2_LOAD_SEGMENT     equ 0x0     ;; This is changed for protected mode. Not yet sure why
-STAGE2_LOAD_OFFSET      equ 500
+STAGE2_LOAD_OFFSET      equ 0x500
 
 
 ; For signature BIOS expects last 2 bytes in 1st sector to be AA55
@@ -431,7 +431,7 @@ STAGE2_LOAD_OFFSET      equ 500
 ; db is an instruction to place a byte
 ; times is an instruction which allows to repeat other instruction
 
-times 510 - ($ - $$) db 0
+times 510-($-$$) db 0
 
 dw 0AA55h
 
