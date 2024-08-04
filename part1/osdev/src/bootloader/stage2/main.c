@@ -1,17 +1,36 @@
 #include <stdint.h>
 #include "stdio.h"
+#include "x86.h"
 //#include "disk.h"
 //#include "fat.h"
 
 //void far* g_data = (void far*)0x00500200;
 
+void puts_realmode(const char* str)
+{
+    while (*str) // String must be null terminated or we will crash
+    {
+        x86_realmode_putc(*str);
+        ++str;
+    }
+}
+
 void __attribute__((cdecl)) start(uint16_t bootDrive)
 {
     clrscr();
 
-    for( int i=0; i < 30; i++) {
-        printf("Hello from Stage2 %d \n", i);
-    }
+    // for( int i=0; i < 30; i++) {
+    //     printf("Hello from Stage2 %d \n", i);
+    // }
+
+    printf("Hello from stage2 protected mode\n");
+    puts_realmode("Hello from Real Mode\n");
+    printf("Hello again from stage2 pmode\n");
+    puts_realmode("Hello again from Real Mode\n");
+
+
+
+    for(;;);
 }
 //    DISK disk;
 //    if (!DISK_Initialize(&disk, bootDrive))
