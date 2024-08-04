@@ -7,7 +7,11 @@
 
 void __attribute__((cdecl)) start(uint16_t bootDrive)
 {
-    printf("Hello from Stage2");
+    clrscr();
+
+    for( int i=0; i < 30; i++) {
+        printf("Hello from Stage2 %d \n", i);
+    }
 }
 //    DISK disk;
 //    if (!DISK_Initialize(&disk, bootDrive))
