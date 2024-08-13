@@ -22,7 +22,13 @@ void __attribute__((cdecl)) start(uint16_t bootDrive)
     // for( int i=0; i < 30; i++) {
     //     printf("Hello from Stage2 %d \n", i);
     // }
+    uint8_t driveType;
+    uint16_t cyls, secs, heads;
 
+    bool ok = x86_Disk_GetDriveParams( (uint8_t)bootDrive, &driveType, &cyls, &secs, &heads);
+    printf("ReadDiskParams return = %d , driveType = %u , cylinders = %lu , sectors = %lu , heads = %lu", ok, driveType, cyls, secs, heads);
+
+    printf("\n\n----\n");
     printf("Hello from stage2 protected mode\n");
     puts_realmode("Hello from Real Mode\n");
     printf("Hello again from stage2 pmode\n");

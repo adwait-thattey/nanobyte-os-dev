@@ -17,7 +17,7 @@
     ; jump to real mode
     jmp word 00h:.rmode
 
-.rmode
+.rmode:
     [bits 16]
     ; setup segments
     mov ax, 0
@@ -42,7 +42,7 @@
     ; far jump into pmode
     jmp dword 08h:.pmode
 
-.pmode
+.pmode:
     [bits 32]
 
     ; setup segments
@@ -51,6 +51,24 @@
     mov ss, ax
 
 %endmacro
+
+; Convert linear address to segment:offset address
+; Args:
+;    1 - linear address
+;    2 - (out) target segment (e.g. es)
+;    3 - target 32-bit register to use (e.g. eax)
+;    4 - target lower 16-bit half of #3 (e.g. ax)
+
+%macro LinearToSegOffset 4
+
+    mov %3, %1      ; linear address to eax
+    shr %3, 4
+    mov %2, %4
+    mov %3, %1      ; linear address to eax
+    and %3, 0xf
+
+%endmacro
+
 
 
 ;; outb and inb functions are designed to read or write to a specific IO port
@@ -98,6 +116,90 @@ x86_realmode_putc:
     x86_EnterProtectedMode
 
     ;; restoe stack
+    mov esp, ebp
+    pop ebp
+    ret
+
+
+;; FOllowing disk functions copied from older stage 2 asm with slight modifications
+
+; bool _cdecl x86_Disk_GetDriveParams(uint8_t drive, uint8_t* driveTypeOut, uint16_t* cylindersOut,
+;                                    uint16_t* sectorsOut, uint16_t* headsOut);
+global x86_Disk_GetDriveParams
+x86_Disk_GetDriveParams:
+    [bits 32]
+
+    ; make new call frame
+    push ebp             ; save old call frame
+    mov ebp, esp         ; initialize new call frame
+
+    x86_EnterRealMode
+
+    [bits 16]
+
+    ; save regs
+    push es
+    push bx
+    push esi
+    push di
+
+    ; call int13h
+    mov dl, [bp + 8]    ; dl - disk drive
+    mov ah, 08h
+    mov di, 0           ; es:di - 0000:0000
+    mov es, di
+    stc
+    int 13h
+
+    ; out params
+    mov eax, 1
+    sbb eax, 0
+
+    ; drive type from bl
+    ; see one note for explanation on how this conversion works
+    LinearToSegOffset [bp + 12], es, esi, si
+    mov [es:si], bl
+
+    ; cylinders
+    mov bl, ch          ; cylinders - lower bits in ch
+    mov bh, cl          ; cylinders - upper bits in cl (6-7)
+    shr bh, 6
+    inc bx
+
+    LinearToSegOffset [bp + 16], es, esi, si
+    mov [es:si], bx
+
+    ; sectors
+    xor ch, ch          ; sectors - lower 5 bits in cl
+    and cl, 3Fh
+    
+    LinearToSegOffset [bp + 20], es, esi, si
+    mov [es:si], cx
+
+    ; heads
+    mov cl, dh          ; heads - dh
+    inc cx
+
+    LinearToSegOffset [bp + 24], es, esi, si
+    mov [es:si], cx
+
+    ; restore regs
+    pop di
+    pop esi
+    pop bx
+    pop es
+
+    ; return
+
+    push eax
+
+    x86_EnterProtectedMode
+
+    [bits 32]
+
+    pop eax
+
+    ; restore old call frame
     mov esp, ebp
     pop ebp
     ret
