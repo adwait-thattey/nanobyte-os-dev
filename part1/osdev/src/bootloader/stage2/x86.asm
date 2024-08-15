@@ -203,3 +203,88 @@ x86_Disk_GetDriveParams:
     mov esp, ebp
     pop ebp
     ret
+
+global x86_Disk_Reset
+x86_Disk_Reset:
+    [bits 32]
+
+    ; make new call frame
+    push ebp             ; save old call frame
+    mov ebp, esp          ; initialize new call frame
+
+
+    x86_EnterRealMode
+
+    mov ah, 0
+    mov dl, [bp + 8]    ; dl - drive
+    stc
+    int 13h
+
+    mov eax, 1
+    sbb eax, 0           ; 1 on success, 0 on fail   
+
+    push eax
+
+    x86_EnterProtectedMode
+
+    pop eax
+
+    ; restore old call frame
+    mov esp, ebp
+    pop ebp
+    ret
+
+
+global x86_Disk_Read
+x86_Disk_Read:
+
+    ; make new call frame
+    push ebp             ; save old call frame
+    mov ebp, esp          ; initialize new call frame
+
+    x86_EnterRealMode
+
+    ; save modified regs
+    push ebx
+    push es
+
+    ; setup args
+    mov dl, [bp + 8]    ; dl - drive
+
+    mov ch, [bp + 12]    ; ch - cylinder (lower 8 bits)
+    mov cl, [bp + 13]    ; cl - cylinder to bits 6-7
+    shl cl, 6
+    
+    mov al, [bp + 16]    ; cl - sector to bits 0-5
+    and al, 3Fh
+    or cl, al
+
+    mov dh, [bp + 20]   ; dh - head
+
+    mov al, [bp + 24]   ; al - count
+
+    LinearToSegOffset [bp + 28], es, ebx, bx
+
+    ; call int13h
+    mov ah, 02h
+    stc
+    int 13h
+
+    ; set return value
+    mov eax, 1
+    sbb eax, 0           ; 1 on success, 0 on fail   
+
+    ; restore regs
+    pop es
+    pop ebx
+
+    push eax
+
+    x86_EnterProtectedMode
+
+    pop eax
+
+    ; restore old call frame
+    mov esp, ebp
+    pop ebp
+    ret

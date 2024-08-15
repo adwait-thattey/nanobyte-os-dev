@@ -323,6 +323,7 @@ void print_buffer(const char* msg, const void* buffer, uint32_t count)
     puts(msg);
     for (uint16_t i = 0; i < count; i++)
     {
+        // print first hex character, then second hex character
         putc(g_HexChars[u8Buffer[i] >> 4]);
         putc(g_HexChars[u8Buffer[i] & 0xF]);
     }

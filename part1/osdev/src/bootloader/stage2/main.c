@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include "stdio.h"
 #include "x86.h"
-//#include "disk.h"
+#include "disk.h"
 //#include "fat.h"
 
-//void far* g_data = (void far*)0x00500200;
+void* g_data = (void*)0x20000;
 
 void puts_realmode(const char* str)
 {
@@ -26,26 +26,30 @@ void __attribute__((cdecl)) start(uint16_t bootDrive)
     uint16_t cyls, secs, heads;
 
     bool ok = x86_Disk_GetDriveParams( (uint8_t)bootDrive, &driveType, &cyls, &secs, &heads);
-    printf("ReadDiskParams return = %d , driveType = %u , cylinders = %lu , sectors = %lu , heads = %lu", ok, driveType, cyls, secs, heads);
+    printf("ReadDiskParams return = %d , driveType = %u , cylinders = %lu , sectors = %lu , heads = %lu \n\n", ok, driveType, cyls, secs, heads);
+
+    DISK disk;
+    if (!DISK_Initialize(&disk, bootDrive))
+    {
+    printf("Disk init error\r\n");
+    goto end;
+    }
+
+    DISK_ReadSectors(&disk, 0, 1, g_data);
+
+    print_buffer("Boot sector: ", g_data, 512);
 
     printf("\n\n----\n");
-    printf("Hello from stage2 protected mode\n");
-    puts_realmode("Hello from Real Mode\n");
-    printf("Hello again from stage2 pmode\n");
-    puts_realmode("Hello again from Real Mode\n");
+    // printf("Hello from stage2 protected mode\n");
+    // puts_realmode("Hello from Real Mode\n");
+    // printf("Hello again from stage2 pmode\n");
+    // puts_realmode("Hello again from Real Mode\n");
 
 
-
+end:
     for(;;);
 }
-//    DISK disk;
-//    if (!DISK_Initialize(&disk, bootDrive))
-//    {
-//        printf("Disk init error\r\n");
-//        goto end;
-//    }
-//
-//    DISK_ReadSectors(&disk, 19, 1, g_data);
+
 //
 //    if (!FAT_Initialize(&disk))
 //    {
