@@ -200,8 +200,8 @@ uint32_t FAT_Read(DISK* disk, FAT_File* file, uint32_t byteCount, void* dataOut)
 
     uint8_t* u8DataOut = (uint8_t*)dataOut;
 
-    // don't read past the end of the file
-    if (!fd->Public.IsDirectory) 
+    // directories may or may not have a size. if the dir has a size, limit it
+    if (!fd->Public.IsDirectory || (fd->Public.IsDirectory && fd->Public.Size != 0)) 
         byteCount = min(byteCount, fd->Public.Size - fd->Public.Position);
 
     while (byteCount > 0)
@@ -293,7 +293,8 @@ bool FAT_FindFile(DISK* disk, FAT_File* file, const char* name, FAT_DirectoryEnt
     for (int i = 0; i < 8 && name[i] && name + i < ext; i++)
         fatName[i] = toupper(name[i]);
 
-    if (ext != NULL)
+    // if we have a valid extension
+    if (ext != name + 11)
     {
         for (int i = 0; i < 3 && ext[i + 1]; i++)
             fatName[i + 8] = toupper(ext[i + 1]);
