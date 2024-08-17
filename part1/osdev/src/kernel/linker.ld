@@ -1,6 +1,6 @@
-ENTRY(entry)
+ENTRY(start)    // define function start as the entry point
 OUTPUT_FORMAT("binary")
-phys = 0x00000500;  /* load at address 0x500 */
+phys = 0x00100000;  /* load at address 1MB */
 
 SECTIONS
 {

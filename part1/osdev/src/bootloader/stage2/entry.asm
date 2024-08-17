@@ -59,6 +59,7 @@ entry:
     mov ss, ax
 
     ; clear bss (uninitialized data)
+    ; this is done to make sure all uninitialized (global) variables are set to 0 at the start
     mov edi, __bss_start
     mov ecx, __end
     sub ecx, edi
