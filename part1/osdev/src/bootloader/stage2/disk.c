@@ -1,6 +1,7 @@
 #include "disk.h"
 #include "x86.h"
 #include "stdio.h"
+#include "minmax.h"
 
 bool DISK_Initialize(DISK* disk, uint8_t driveNumber)
 {
