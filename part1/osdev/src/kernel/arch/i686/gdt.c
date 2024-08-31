@@ -99,7 +99,7 @@ GDTEntry getDataSegment() {
 // THIS function is written in assembly which actually calls the LGDT instruction
 void __attribute__((cdecl)) i686_GDT_Load(GDTDescriptor* descriptor, uint16_t codeSegment, uint16_t dataSegment);
 
-void initializeGDT() {
+void i686_GDT_Initialize() {
     // we need only 1 code and 1 data segment here. 1st segment is always 0
 
     GDTEntry gdt[] = {

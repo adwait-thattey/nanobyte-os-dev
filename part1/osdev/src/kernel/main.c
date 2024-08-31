@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include "stdio.h"
 #include "memory.h"
-#include "arch/i686/io.h"
-#include "arch/i686/gdt.h"
+#include "hal/hal.h"
 
 // These both will be coming from the linker script
 extern uint8_t __bss_start;
@@ -16,8 +15,8 @@ void __attribute__((section(".entry"))) start(uint16_t bootDrive)
     clrscr();
 
     printf("Hello World from Kernel!!\n");
-    initializeGDT();
-    printf("Hello World after setting up GDT!!\n");
+    HAL_Initialize();
+    printf("Hello World after setting up GDT via HAL!!\n");
 
 end:
     for(;;);
