@@ -1,7 +1,7 @@
 #include "stdio.h"
 #include <stdarg.h>
 #include <stdbool.h>
-#include "x86.h"
+#include "arch/i686/io.h"
 
 // to print to screen now, we just need to write to video memory
 const unsigned SCREEN_WIDTH = 80;
@@ -308,6 +308,7 @@ void printf(const char* fmt, ...)
                 length = PRINTF_LENGTH_DEFAULT;
                 radix = 10;
                 sign = false;
+                number = false;
                 break;
         }
 

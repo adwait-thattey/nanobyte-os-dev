@@ -1,4 +1,4 @@
-ENTRY(start)    // define function start as the entry point
+ENTRY(start)    /* define function start as the entry point */
 OUTPUT_FORMAT("binary")
 phys = 0x00100000;  /* load at address 1MB */
 
