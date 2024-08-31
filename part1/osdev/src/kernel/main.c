@@ -16,7 +16,7 @@ void __attribute__((section(".entry"))) start(uint16_t bootDrive)
 
     printf("Hello World from Kernel!!\n");
     HAL_Initialize();
-    printf("Hello World after setting up GDT via HAL!!\n");
+    printf("Hello World after setting up GDT and IDT via HAL!!\n");
 
 end:
     for(;;);
